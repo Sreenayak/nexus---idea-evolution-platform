@@ -1,0 +1,864 @@
+import React, { useState, useEffect } from 'react';
+import {
+  mockWorlds,
+  mockSparks,
+  mockChallenges,
+  mockConnections,
+  currentUser as initialCurrentUser,
+} from './data/mockData';
+import {
+  SocialWorld,
+  Spark,
+  Challenge,
+  ActivityConnection,
+  NexusUser,
+  RemixType,
+} from './types';
+import { ParticleBackground } from './components/ParticleBackground';
+import { Navbar } from './components/Navbar';
+import { LandingHero } from './components/LandingHero';
+import { UniverseMap } from './components/UniverseMap';
+import { WorldsDirectory } from './components/WorldsDirectory';
+import { WorldDetailView } from './components/WorldDetailView';
+import { IdeaEvolutionGraph } from './components/IdeaEvolutionGraph';
+import { ChallengesList } from './components/ChallengesList';
+import { ConnectionsView } from './components/ConnectionsView';
+import { CreateSparkModal } from './components/CreateSparkModal';
+import { RemixModal } from './components/RemixModal';
+import { MergeModal } from './components/MergeModal';
+import { UserProfileModal } from './components/UserProfileModal';
+import { AuthModal } from './components/AuthModal';
+import { GlobalSearchModal } from './components/GlobalSearchModal';
+import { NovaAiCopilot } from './components/NovaAiCopilot';
+import {
+  Sparkles,
+  CheckCircle2,
+  GitBranch,
+  GitMerge,
+  Flame,
+} from 'lucide-react';
+
+export default function App() {
+  // App-level view state: Home page ('landing') as default entry point per user request
+  const [currentView, setCurrentView] = useState<
+    'landing' | 'universe' | 'worlds' | 'world' | 'evolution' | 'challenges' | 'connections'
+  >('landing');
+
+  const [selectedWorldId, setSelectedWorldId] = useState<string>('world-ai');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return Boolean(localStorage.getItem('nexus_token') || localStorage.getItem('nexus_auth_active'));
+  });
+
+  // Entities state
+  const [worlds, setWorlds] = useState<SocialWorld[]>(mockWorlds);
+  const [sparks, setSparks] = useState<Spark[]>(mockSparks);
+  const [challenges, setChallenges] = useState<Challenge[]>(mockChallenges);
+  const [connections, setConnections] = useState<ActivityConnection[]>(mockConnections);
+  const [currentUser, setCurrentUser] = useState<NexusUser>(() => {
+    const savedUser = localStorage.getItem('nexus_user');
+    if (savedUser) {
+      try {
+        return JSON.parse(savedUser);
+      } catch {
+        return initialCurrentUser;
+      }
+    }
+    return initialCurrentUser;
+  });
+
+  // Selected spark for the Evolution DAG graph view
+  const [selectedSparkForGraph, setSelectedSparkForGraph] = useState<Spark>(mockSparks[0]);
+
+  // Modals state
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isCreateSparkOpen, setIsCreateSparkOpen] = useState(false);
+  const [createSparkDefaultWorldId, setCreateSparkDefaultWorldId] = useState<string>('world-ai');
+
+  const [isRemixOpen, setIsRemixOpen] = useState(false);
+  const [targetRemixSpark, setTargetRemixSpark] = useState<Spark | null>(null);
+
+  const [isMergeOpen, setIsMergeOpen] = useState(false);
+  const [mergeSparkA, setMergeSparkA] = useState<Spark | null>(null);
+  const [mergeSparkB, setMergeSparkB] = useState<Spark | null>(null);
+
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNovaAiOpen, setIsNovaAiOpen] = useState(false);
+
+  // Notifications Toast state
+  const [toast, setToast] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    type: 'spark' | 'remix' | 'merge' | 'challenge' | 'ignite';
+  } | null>(null);
+
+  const showToast = (
+    title: string,
+    description: string,
+    type: 'spark' | 'remix' | 'merge' | 'challenge' | 'ignite'
+  ) => {
+    setToast({
+      id: Date.now().toString(),
+      title,
+      description,
+      type,
+    });
+    setTimeout(() => setToast(null), 4500);
+  };
+
+  // Sync initial backend state on mount
+  useEffect(() => {
+    const syncBackendData = async () => {
+      try {
+        const [worldsRes, sparksRes, challengesRes, connectionsRes] = await Promise.allSettled([
+          fetch('/api/worlds'),
+          fetch('/api/sparks'),
+          fetch('/api/challenges'),
+          fetch('/api/connections'),
+        ]);
+
+        if (worldsRes.status === 'fulfilled' && worldsRes.value.ok) {
+          const data = await worldsRes.value.json();
+          if (data.worlds && data.worlds.length > 0) setWorlds(data.worlds);
+        }
+
+        if (sparksRes.status === 'fulfilled' && sparksRes.value.ok) {
+          const data = await sparksRes.value.json();
+          if (data.sparks && data.sparks.length > 0) {
+            setSparks(data.sparks);
+            setSelectedSparkForGraph(data.sparks[0]);
+          }
+        }
+
+        if (challengesRes.status === 'fulfilled' && challengesRes.value.ok) {
+          const data = await challengesRes.value.json();
+          if (data.challenges && data.challenges.length > 0) setChallenges(data.challenges);
+        }
+
+        if (connectionsRes.status === 'fulfilled' && connectionsRes.value.ok) {
+          const data = await connectionsRes.value.json();
+          if (data.connections && data.connections.length > 0) setConnections(data.connections);
+        }
+      } catch (err) {
+        console.info('Operating with local client cache fallback');
+      }
+    };
+
+    syncBackendData();
+  }, []);
+
+  // Save current user to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('nexus_user', JSON.stringify(currentUser));
+    } catch (e) {
+      console.warn('Could not save user state');
+    }
+  }, [currentUser]);
+
+  // Handler: Selecting a world to inspect
+  const handleSelectWorld = (worldId: string) => {
+    setSelectedWorldId(worldId);
+    setCurrentView('world');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handler: Creating a brand new Spark
+  const handleCreateSpark = async (data: {
+    worldId: string;
+    title: string;
+    content: string;
+    tags: string[];
+  }) => {
+    const newSpark: Spark = {
+      id: `spark-${Date.now()}`,
+      worldId: data.worldId,
+      author: currentUser,
+      title: data.title,
+      content: data.content,
+      branchType: 'original',
+      remixCount: 0,
+      mergeCount: 0,
+      energy: 85,
+      createdAt: 'Just now',
+      tags: data.tags,
+      status: 'active',
+      childSparkIds: [],
+    };
+
+    // Update local state optimistically
+    setSparks((prev) => [newSpark, ...prev]);
+
+    // Update user stats
+    setCurrentUser((prev) => ({
+      ...prev,
+      stats: {
+        ...prev.stats,
+        sparksCreated: prev.stats.sparksCreated + 1,
+      },
+    }));
+
+    // Increment world active sparks & pulse energy
+    setWorlds((prev) =>
+      prev.map((w) =>
+        w.id === data.worldId
+          ? {
+              ...w,
+              activeSparks: w.activeSparks + 1,
+              pulse: {
+                ...w.pulse,
+                energy: Math.min(100, w.pulse.energy + 2),
+                creativity: Math.min(100, w.pulse.creativity + 3),
+              },
+            }
+          : w
+      )
+    );
+
+    setSelectedWorldId(data.worldId);
+    setCurrentView('world');
+
+    showToast(
+      'Spark Ignited in Social World!',
+      `"${data.title.slice(0, 35)}..." is now live on the Idea Evolution Graph.`,
+      'spark'
+    );
+
+    // Sync to backend asynchronously
+    try {
+      await fetch('/api/sparks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          worldId: data.worldId,
+          title: data.title,
+          content: data.content,
+          tags: data.tags,
+          authorId: currentUser.id,
+        }),
+      });
+    } catch {
+      // Handled gracefully in local state
+    }
+  };
+
+  // Handler: Submitting a Remix
+  const handleCreateRemix = async (data: {
+    parentSparkId: string;
+    worldId: string;
+    title: string;
+    content: string;
+    remixType: RemixType;
+    evolutionNote: string;
+    tags: string[];
+  }) => {
+    const newRemixId = `spark-remix-${Date.now()}`;
+    const newRemixSpark: Spark = {
+      id: newRemixId,
+      worldId: data.worldId,
+      author: currentUser,
+      title: data.title,
+      content: data.content,
+      branchType: 'remix',
+      remixType: data.remixType,
+      parentSparkId: data.parentSparkId,
+      evolutionNote: data.evolutionNote,
+      remixCount: 0,
+      mergeCount: 0,
+      energy: 92,
+      createdAt: 'Just now',
+      tags: data.tags,
+      status: 'active',
+      childSparkIds: [],
+    };
+
+    // Update sparks and link into parent
+    setSparks((prev) =>
+      prev.map((s) => {
+        if (s.id === data.parentSparkId) {
+          return {
+            ...s,
+            remixCount: s.remixCount + 1,
+            energy: Math.min(100, s.energy + 5),
+            childSparkIds: [...s.childSparkIds, newRemixId],
+          };
+        }
+        return s;
+      }).concat(newRemixSpark)
+    );
+
+    // Update user stats
+    setCurrentUser((prev) => ({
+      ...prev,
+      stats: {
+        ...prev.stats,
+        ideasRemixed: prev.stats.ideasRemixed + 1,
+      },
+    }));
+
+    // Update world pulse
+    setWorlds((prev) =>
+      prev.map((w) =>
+        w.id === data.worldId
+          ? {
+              ...w,
+              pulse: {
+                ...w.pulse,
+                curiosity: Math.min(100, w.pulse.curiosity + 3),
+                collaboration: Math.min(100, w.pulse.collaboration + 4),
+              },
+            }
+          : w
+      )
+    );
+
+    setSelectedSparkForGraph(newRemixSpark);
+    showToast(
+      `Remix Branch Created [${data.remixType.toUpperCase()}]`,
+      `Successfully branched idea on the lineage tree.`,
+      'remix'
+    );
+
+    // Sync to backend asynchronously
+    try {
+      await fetch(`/api/sparks/${data.parentSparkId}/remix`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          worldId: data.worldId,
+          title: data.title,
+          content: data.content,
+          remixType: data.remixType,
+          evolutionNote: data.evolutionNote,
+          tags: data.tags,
+          authorId: currentUser.id,
+        }),
+      });
+    } catch {
+      // Local state is preserved
+    }
+  };
+
+  // Handler: Executing a Merge
+  const handleExecuteMerge = async (data: {
+    sparkAId: string;
+    sparkBId: string;
+    mergedTitle: string;
+    synthesisDescription: string;
+    projectGoal: string;
+    worldId: string;
+  }) => {
+    const newProjectId = `spark-project-${Date.now()}`;
+    const projectSpark: Spark = {
+      id: newProjectId,
+      worldId: data.worldId,
+      author: currentUser,
+      title: data.mergedTitle,
+      content: `${data.synthesisDescription}\n\nDeliverable: ${data.projectGoal}`,
+      branchType: 'merged',
+      mergedFromIds: [data.sparkAId, data.sparkBId],
+      remixCount: 0,
+      mergeCount: 1,
+      energy: 98,
+      createdAt: 'Just now',
+      tags: ['CollaborativeProject', 'Merged', 'SprintReady'],
+      status: 'project',
+      childSparkIds: [],
+    };
+
+    // Update existing sparks
+    setSparks((prev) =>
+      prev.map((s) => {
+        if (s.id === data.sparkAId || s.id === data.sparkBId) {
+          return {
+            ...s,
+            mergeCount: s.mergeCount + 1,
+            energy: Math.min(100, s.energy + 8),
+            childSparkIds: [...s.childSparkIds, newProjectId],
+          };
+        }
+        return s;
+      }).concat(projectSpark)
+    );
+
+    // Update user stats
+    setCurrentUser((prev) => ({
+      ...prev,
+      stats: {
+        ...prev.stats,
+        projectsBuilt: prev.stats.projectsBuilt + 1,
+      },
+    }));
+
+    // Update world active projects and pulse
+    setWorlds((prev) =>
+      prev.map((w) =>
+        w.id === data.worldId
+          ? {
+              ...w,
+              activeProjects: w.activeProjects + 1,
+              pulse: {
+                ...w.pulse,
+                collaboration: Math.min(100, w.pulse.collaboration + 6),
+                energy: Math.min(100, w.pulse.energy + 4),
+              },
+            }
+          : w
+      )
+    );
+
+    setSelectedSparkForGraph(projectSpark);
+    showToast(
+      'Ideas Merged: Collaborative Project Born!',
+      `Synthesized 2 branches into a unified project node.`,
+      'merge'
+    );
+
+    // Sync to backend asynchronously
+    try {
+      await fetch('/api/sparks/merge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          authorId: currentUser.id,
+        }),
+      });
+    } catch {
+      // Local state is preserved
+    }
+  };
+
+  // Handler: Igniting energy on a spark
+  const handleIgniteEnergy = async (sparkId: string) => {
+    setSparks((prev) =>
+      prev.map((s) =>
+        s.id === sparkId ? { ...s, energy: Math.min(100, s.energy + 4) } : s
+      )
+    );
+    showToast('Spark Resonance Ignited', 'Added collective attention energy to this node.', 'ignite');
+
+    try {
+      await fetch(`/api/sparks/${sparkId}/ignite`, { method: 'POST' });
+    } catch {
+      // Local state is preserved
+    }
+  };
+
+  // Handler: Joining a challenge
+  const handleJoinChallenge = async (challengeId: string) => {
+    setChallenges((prev) =>
+      prev.map((c) =>
+        c.id === challengeId
+          ? {
+              ...c,
+              participantCount: Math.min(c.maxParticipants, c.participantCount + 1),
+              progressPercent: Math.min(100, c.progressPercent + 8),
+              participants: [
+                ...c.participants,
+                {
+                  name: currentUser.name,
+                  avatar: currentUser.avatar,
+                  role: currentUser.role,
+                },
+              ],
+            }
+          : c
+      )
+    );
+
+    setCurrentUser((prev) => ({
+      ...prev,
+      stats: {
+        ...prev.stats,
+        challengesCompleted: prev.stats.challengesCompleted + 1,
+      },
+    }));
+
+    showToast('Challenge Workspace Unlocked', 'You are now an active collaborator in this sprint.', 'challenge');
+
+    try {
+      await fetch(`/api/challenges/${challengeId}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userName: currentUser.name,
+          userAvatar: currentUser.avatar,
+          userRole: currentUser.role,
+        }),
+      });
+    } catch {
+      // Local state preserved
+    }
+  };
+
+  // Global keyboard shortcut for search (/ and Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = (document.activeElement as HTMLElement)?.tagName;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
+
+      if (e.key === '/' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Authentication callback
+  const handleLoginSuccess = (user: NexusUser, token?: string) => {
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    localStorage.setItem('nexus_auth_active', 'true');
+    if (token) localStorage.setItem('nexus_token', token);
+    showToast('Authenticated Successfully', `Welcome to NEXUS, ${user.name}!`, 'spark');
+  };
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('nexus_token');
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    } catch {
+      // Ignore
+    }
+    localStorage.removeItem('nexus_token');
+    localStorage.removeItem('nexus_auth_active');
+    setIsAuthenticated(false);
+    setCurrentUser(initialCurrentUser);
+    showToast('Signed Out', 'You have logged out of your node session.', 'spark');
+  };
+
+  // Helper to trigger remix modal
+  const handleStartRemix = (spark: Spark) => {
+    setTargetRemixSpark(spark);
+    setIsRemixOpen(true);
+  };
+
+  // Helper to trigger merge modal
+  const handleStartMerge = (spark: Spark) => {
+    setMergeSparkA(spark);
+    setIsMergeOpen(true);
+  };
+
+  // Helper to view graph for specific spark
+  const handleViewGraph = (spark: Spark) => {
+    setSelectedSparkForGraph(spark);
+    setCurrentView('evolution');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Current active world entity
+  const currentActiveWorld =
+    worlds.find((w) => w.id === selectedWorldId) || worlds[0];
+
+  return (
+    <div className="relative min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
+      {/* Background Interactive Cosmic Stars Canvas in clean subtle light tones */}
+      <ParticleBackground />
+
+      {/* Global Navbar */}
+      <Navbar
+        currentTab={currentView === 'world' ? 'worlds' : currentView}
+        onSelectTab={(tab) => {
+          setCurrentView(tab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onOpenCreateSpark={() => {
+          setCreateSparkDefaultWorldId(selectedWorldId);
+          setIsCreateSparkOpen(true);
+        }}
+        onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onLogout={handleLogout}
+        isAuthenticated={isAuthenticated}
+        onOpenSearch={() => setIsSearchOpen(true)}
+        onToggleNova={() => setIsNovaAiOpen((prev) => !prev)}
+        isNovaOpen={isNovaAiOpen}
+        currentUser={currentUser}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
+
+      {/* Toast Notification Banner */}
+      {toast && (
+        <div
+          id="global-nexus-toast"
+          className="fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl bg-white border border-slate-200 shadow-xl backdrop-blur-xl flex items-start gap-3 animate-in fade-in slide-in-from-bottom-5 duration-200"
+        >
+          <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 mt-0.5">
+            {toast.type === 'spark' && <Sparkles className="w-4 h-4" />}
+            {toast.type === 'remix' && <GitBranch className="w-4 h-4" />}
+            {toast.type === 'merge' && <GitMerge className="w-4 h-4" />}
+            {toast.type === 'challenge' && <CheckCircle2 className="w-4 h-4" />}
+            {toast.type === 'ignite' && <Flame className="w-4 h-4 text-amber-500" />}
+          </div>
+          <div>
+            <h4 className="text-xs font-bold font-display text-slate-900">
+              {toast.title}
+            </h4>
+            <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+              {toast.description}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Main Container Content */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 relative z-10">
+        {/* VIEW 1: LANDING OVERVIEW (Default Home Screen per user request) */}
+        {currentView === 'landing' && (
+          <LandingHero
+            onEnterUniverse={() => setCurrentView('universe')}
+            onExploreEvolution={() => setCurrentView('evolution')}
+            onOpenCreateSpark={() => {
+              setCreateSparkDefaultWorldId('world-ai');
+              setIsCreateSparkOpen(true);
+            }}
+          />
+        )}
+
+        {/* VIEW 2: UNIVERSE GALAXY MAP */}
+        {currentView === 'universe' && (
+          <div className="space-y-6">
+            <UniverseMap
+              worlds={worlds}
+              selectedWorldId={selectedWorldId}
+              onSelectWorld={handleSelectWorld}
+              onNavigateToWorlds={() => setCurrentView('worlds')}
+              onOpenCreateSpark={() => {
+                setCreateSparkDefaultWorldId(selectedWorldId);
+                setIsCreateSparkOpen(true);
+              }}
+            />
+          </div>
+        )}
+
+        {/* VIEW 2b: SOCIAL WORLDS DIRECTORY */}
+        {currentView === 'worlds' && (
+          <WorldsDirectory
+            worlds={worlds}
+            onSelectWorld={handleSelectWorld}
+            onOpenCreateSpark={(wId) => {
+              setCreateSparkDefaultWorldId(wId);
+              setIsCreateSparkOpen(true);
+            }}
+            onViewChallenges={(wId) => {
+              setSelectedWorldId(wId);
+              setCurrentView('challenges');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            searchQuery={searchQuery}
+          />
+        )}
+
+        {/* VIEW 3: SOCIAL WORLD DETAIL */}
+        {currentView === 'world' && (
+          <WorldDetailView
+            world={currentActiveWorld}
+            allWorlds={worlds}
+            sparks={sparks}
+            challenges={challenges}
+            currentUser={currentUser}
+            onBackToUniverse={() => setCurrentView('universe')}
+            onBackToWorlds={() => setCurrentView('worlds')}
+            onSelectOtherWorld={handleSelectWorld}
+            onOpenCreateSparkInWorld={(wId) => {
+              setCreateSparkDefaultWorldId(wId);
+              setIsCreateSparkOpen(true);
+            }}
+            onRemixSpark={handleStartRemix}
+            onMergeSpark={handleStartMerge}
+            onViewGraph={handleViewGraph}
+            onIgniteEnergy={handleIgniteEnergy}
+            onJoinChallenge={handleJoinChallenge}
+          />
+        )}
+
+        {/* VIEW 4: IDEA EVOLUTION GRAPH (DAG) */}
+        {currentView === 'evolution' && (
+          <div className="space-y-6">
+            <IdeaEvolutionGraph
+              sparks={sparks}
+              allSparks={sparks}
+              worlds={worlds}
+              selectedSparkId={selectedSparkForGraph.id}
+              onSelectSpark={(spark) => setSelectedSparkForGraph(spark)}
+              onRemixSpark={handleStartRemix}
+              onRemixFromNode={handleStartRemix}
+              onMergeSpark={handleStartMerge}
+              onMergeBranches={(sA, sB) => {
+                setMergeSparkA(sA);
+                setMergeSparkB(sB);
+                setIsMergeOpen(true);
+              }}
+              onIgniteEnergy={handleIgniteEnergy}
+            />
+          </div>
+        )}
+
+        {/* VIEW 5: CHALLENGES LIST */}
+        {currentView === 'challenges' && (
+          <ChallengesList
+            challenges={challenges}
+            worlds={worlds}
+            currentUser={currentUser}
+            onJoinChallenge={handleJoinChallenge}
+            onSelectWorld={handleSelectWorld}
+          />
+        )}
+
+        {/* VIEW 6: ACTIVITY CONNECTIONS */}
+        {currentView === 'connections' && (
+          <ConnectionsView
+            connections={connections}
+            currentUser={currentUser}
+            onInitiateCollab={(user) => {
+              setCreateSparkDefaultWorldId('world-ai');
+              setIsCreateSparkOpen(true);
+              showToast(
+                'Collaborative Spark Initiated',
+                `Ready to co-author an idea with ${user.name} based on your complementary skills.`,
+                'spark'
+              );
+            }}
+          />
+        )}
+      </main>
+
+      {/* Global Modals */}
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        currentUser={currentUser}
+        isAuthenticated={isAuthenticated}
+        onLoginSuccess={handleLoginSuccess}
+        onLogout={handleLogout}
+      />
+
+      {/* Global Search Engine Modal */}
+      <GlobalSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        query={searchQuery}
+        onQueryChange={setSearchQuery}
+        sparks={sparks}
+        worlds={worlds}
+        challenges={challenges}
+        connections={connections}
+        onSelectSpark={(spark) => {
+          setSelectedSparkForGraph(spark);
+          setCurrentView('evolution');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onSelectWorld={(worldId) => {
+          handleSelectWorld(worldId);
+        }}
+        onSelectChallenge={(challengeId, worldId) => {
+          setSelectedWorldId(worldId);
+          setCurrentView('challenges');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onSelectPerson={() => {
+          setCurrentView('connections');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
+
+      {/* Create Spark Modal */}
+      <CreateSparkModal
+        isOpen={isCreateSparkOpen}
+        onClose={() => setIsCreateSparkOpen(false)}
+        worlds={worlds}
+        defaultWorldId={createSparkDefaultWorldId}
+        currentUser={currentUser}
+        onCreateSpark={handleCreateSpark}
+      />
+
+      {/* Remix Modal */}
+      <RemixModal
+        isOpen={isRemixOpen}
+        onClose={() => setIsRemixOpen(false)}
+        parentSpark={targetRemixSpark}
+        currentUser={currentUser}
+        onSubmitRemix={handleCreateRemix}
+      />
+
+      {/* Merge Modal */}
+      <MergeModal
+        isOpen={isMergeOpen}
+        onClose={() => setIsMergeOpen(false)}
+        initialSparkA={mergeSparkA}
+        initialSparkB={mergeSparkB}
+        availableSparks={sparks}
+        currentUser={currentUser}
+        onExecuteMerge={handleExecuteMerge}
+      />
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        user={currentUser}
+        userSparks={sparks.filter((s) => s.author.id === currentUser.id)}
+        onSelectSpark={(spark) => {
+          setSelectedSparkForGraph(spark);
+          setCurrentView('evolution');
+        }}
+        onLogout={handleLogout}
+      />
+
+      {/* NOVA AI Copilot Drawer */}
+      <NovaAiCopilot
+        isOpen={isNovaAiOpen}
+        onClose={() => setIsNovaAiOpen(false)}
+        worlds={worlds}
+        sparks={sparks}
+        connections={connections}
+        currentUser={currentUser}
+        onApplyNovaSpark={(title, content, worldId) => {
+          handleCreateSpark({
+            worldId,
+            title,
+            content,
+            tags: ['NovaSynthesized', 'OpenCollab'],
+          });
+        }}
+        onTriggerNovaMerge={(sparkAId, sparkBId) => {
+          const sA = sparks.find((s) => s.id === sparkAId) || sparks[0];
+          const sB = sparks.find((s) => s.id === sparkBId) || sparks[1];
+          setMergeSparkA(sA);
+          setMergeSparkB(sB);
+          setIsMergeOpen(true);
+        }}
+        onSelectWorld={handleSelectWorld}
+      />
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 py-8 px-4 sm:px-6 relative z-10 bg-white/90 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-500">
+          <div className="flex items-center gap-2">
+            <span className="font-bold font-display text-slate-900 text-sm">NEXUS</span>
+            <span>— Next-Generation Idea Evolution Engine</span>
+          </div>
+          <div className="flex items-center gap-4 text-slate-600">
+            <span className="italic">"Ideas evolve through people."</span>
+            <span className="text-indigo-600 font-bold">• 48h Sprint Edition</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

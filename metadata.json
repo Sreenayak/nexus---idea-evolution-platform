@@ -1,0 +1,6 @@
+{
+  "name": "NEXUS - Idea Evolution Platform",
+  "description": "Next-generation collaborative social platform where ideas evolve through Social Worlds, Sparks, Remixes, Merges, and activity-based connections.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
