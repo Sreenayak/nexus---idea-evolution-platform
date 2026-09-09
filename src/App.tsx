@@ -688,6 +688,19 @@ export default function App() {
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
         onOpenReliability={() => setIsReliabilityOpen(true)}
         onOpenQuadraticConsensus={() => setIsConsensusOpen(true)}
+        onOpenPaperExport={() => {
+          if (sparks.length > 0) {
+            setPaperExportSpark(sparks[0]);
+          }
+          setIsPaperExportOpen(true);
+        }}
+        onOpenDiff={() => {
+          const remixedSpark = sparks.find((s) => s.parentSparkId) || sparks[0];
+          if (remixedSpark) {
+            setDiffCurrentSpark(remixedSpark);
+            setIsMutationDiffOpen(true);
+          }
+        }}
       />
 
       {/* Toast Notification Banner with ARIA Live Announcement */}
