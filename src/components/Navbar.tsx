@@ -11,6 +11,12 @@ import {
   Search,
   LogIn,
   LogOut,
+  Volume2,
+  VolumeX,
+  Keyboard,
+  Activity,
+  HelpCircle,
+  Scale,
 } from 'lucide-react';
 import { NexusUser } from '../types';
 
@@ -28,6 +34,11 @@ interface NavbarProps {
   currentUser: NexusUser;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  soundEnabled?: boolean;
+  onToggleSound?: () => void;
+  onOpenShortcuts?: () => void;
+  onOpenReliability?: () => void;
+  onOpenQuadraticConsensus?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -44,12 +55,28 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   searchQuery,
   onSearchChange,
+  soundEnabled = false,
+  onToggleSound,
+  onOpenShortcuts,
+  onOpenReliability,
+  onOpenQuadraticConsensus,
 }) => {
   return (
-    <header
-      id="nexus-primary-nav"
-      className="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/95 backdrop-blur-xl shadow-xs transition-all duration-300"
-    >
+    <>
+      {/* WCAG AA Accessible Skip to Main Content Link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:font-bold focus:text-xs focus:rounded-xl focus:shadow-lg focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
+      <header
+        id="nexus-primary-nav"
+        role="banner"
+        className="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/95 backdrop-blur-xl shadow-xs transition-all duration-300"
+      >
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-2 sm:gap-4">
           {/* Logo & Brand Identity */}
@@ -213,6 +240,64 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </button>
 
+            {/* Quadratic Consensus Matrix Trigger (Innovation & Governance) */}
+            {onOpenQuadraticConsensus && (
+              <button
+                id="nav-quadratic-btn"
+                onClick={onOpenQuadraticConsensus}
+                aria-label="Open Quadratic Conviction Staking Matrix"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 transition-all duration-200 cursor-pointer shadow-xs"
+                title="Quadratic Conviction Staking Matrix"
+              >
+                <Scale className="w-3.5 h-3.5 text-amber-600" />
+                <span>Consensus Matrix</span>
+              </button>
+            )}
+
+            {/* Ambient Acoustic Sound FX Toggle */}
+            {onToggleSound && (
+              <button
+                id="nav-sound-btn"
+                onClick={onToggleSound}
+                aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
+                className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                  soundEnabled
+                    ? 'bg-amber-50 border-amber-300 text-amber-700 shadow-2xs'
+                    : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-500'
+                }`}
+                title={soundEnabled ? 'Acoustic Feedback: Enabled (M)' : 'Acoustic Feedback: Muted (M)'}
+              >
+                {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+              </button>
+            )}
+
+            {/* Keyboard Shortcuts Guide */}
+            {onOpenShortcuts && (
+              <button
+                id="nav-shortcuts-btn"
+                onClick={onOpenShortcuts}
+                aria-label="Open keyboard shortcuts guide"
+                className="hidden lg:flex p-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 transition-all cursor-pointer"
+                title="Keyboard Shortcuts & Accessibility (?)"
+              >
+                <Keyboard className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {/* System Health & Architecture Benchmark */}
+            {onOpenReliability && (
+              <button
+                id="nav-health-btn"
+                onClick={onOpenReliability}
+                aria-label="View system reliability and architecture audit"
+                className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-[11px] font-mono font-bold transition-all cursor-pointer"
+                title="System Quality & Reliability Benchmark"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                <span>99.9% Health</span>
+              </button>
+            )}
+
             {/* Create Spark Primary Action */}
             <button
               id="nav-create-spark-btn"
@@ -328,6 +413,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
     </header>
+    </>
   );
 };
 

@@ -30,6 +30,12 @@ import { UserProfileModal } from './components/UserProfileModal';
 import { AuthModal } from './components/AuthModal';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { NovaAiCopilot } from './components/NovaAiCopilot';
+import { MutationDiffModal } from './components/MutationDiffModal';
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
+import { ReliabilityModal } from './components/ReliabilityModal';
+import { QuadraticConsensusModal } from './components/QuadraticConsensusModal';
+import { ResearchPaperExportModal } from './components/ResearchPaperExportModal';
+import { soundEffects } from './utils/soundEffects';
 import {
   Sparkles,
   CheckCircle2,
@@ -87,6 +93,18 @@ export default function App() {
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNovaAiOpen, setIsNovaAiOpen] = useState(false);
+
+  // New accessibility, mutation inspector & reliability modals
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isReliabilityOpen, setIsReliabilityOpen] = useState(false);
+  const [isMutationDiffOpen, setIsMutationDiffOpen] = useState(false);
+  const [diffCurrentSpark, setDiffCurrentSpark] = useState<Spark | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(() => soundEffects.isEnabled());
+
+  // Innovation Modals: Quadratic Conviction Staking & Research Paper Export
+  const [isConsensusOpen, setIsConsensusOpen] = useState(false);
+  const [isPaperExportOpen, setIsPaperExportOpen] = useState(false);
+  const [paperExportSpark, setPaperExportSpark] = useState<Spark | null>(null);
 
   // Notifications Toast state
   const [toast, setToast] = useState<{
@@ -461,7 +479,9 @@ export default function App() {
               participants: [
                 ...c.participants,
                 {
+                  id: currentUser.id,
                   name: currentUser.name,
+                  handle: currentUser.handle,
                   avatar: currentUser.avatar,
                   role: currentUser.role,
                 },
@@ -540,6 +560,76 @@ export default function App() {
     showToast('Signed Out', 'You have logged out of your node session.', 'spark');
   };
 
+  // Global keyboard shortcuts listener (Accessibility & Power Navigation)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        if (e.key === 'Escape') {
+          setIsAuthOpen(false);
+          setIsCreateSparkOpen(false);
+          setIsRemixOpen(false);
+          setIsMergeOpen(false);
+          setIsProfileOpen(false);
+          setIsSearchOpen(false);
+          setIsNovaAiOpen(false);
+          setIsShortcutsOpen(false);
+          setIsReliabilityOpen(false);
+          setIsMutationDiffOpen(false);
+        }
+        return;
+      }
+
+      if (e.key === '/' || (e.ctrlKey && e.key === 'k') || (e.metaKey && e.key === 'k')) {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      } else if (e.key === '?') {
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
+      } else if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        setIsCreateSparkOpen(true);
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        const next = soundEffects.toggle();
+        setSoundEnabled(next);
+        showToast(next ? 'Sound FX Enabled' : 'Sound FX Muted', 'Acoustic harmonic feedback updated', 'ignite');
+      } else if (e.key === '1') {
+        setCurrentView('landing');
+      } else if (e.key === '2') {
+        setCurrentView('universe');
+      } else if (e.key === '3') {
+        setCurrentView('worlds');
+      } else if (e.key === '4') {
+        setCurrentView('evolution');
+      } else if (e.key === '5') {
+        setCurrentView('challenges');
+      } else if (e.key === '6') {
+        setCurrentView('connections');
+      } else if (e.key === 'Escape') {
+        setIsAuthOpen(false);
+        setIsCreateSparkOpen(false);
+        setIsRemixOpen(false);
+        setIsMergeOpen(false);
+        setIsProfileOpen(false);
+        setIsSearchOpen(false);
+        setIsNovaAiOpen(false);
+        setIsShortcutsOpen(false);
+        setIsReliabilityOpen(false);
+        setIsMutationDiffOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Helper to inspect genetic mutation diff
+  const handleInspectDiff = (spark: Spark) => {
+    setDiffCurrentSpark(spark);
+    setIsMutationDiffOpen(true);
+  };
+
   // Helper to trigger remix modal
   const handleStartRemix = (spark: Spark) => {
     setTargetRemixSpark(spark);
@@ -589,12 +679,23 @@ export default function App() {
         currentUser={currentUser}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        soundEnabled={soundEnabled}
+        onToggleSound={() => {
+          const next = soundEffects.toggle();
+          setSoundEnabled(next);
+          showToast(next ? 'Sound FX Enabled' : 'Sound FX Muted', 'Acoustic harmonic feedback updated', 'ignite');
+        }}
+        onOpenShortcuts={() => setIsShortcutsOpen(true)}
+        onOpenReliability={() => setIsReliabilityOpen(true)}
+        onOpenQuadraticConsensus={() => setIsConsensusOpen(true)}
       />
 
-      {/* Toast Notification Banner */}
+      {/* Toast Notification Banner with ARIA Live Announcement */}
       {toast && (
         <div
           id="global-nexus-toast"
+          role="status"
+          aria-live="polite"
           className="fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl bg-white border border-slate-200 shadow-xl backdrop-blur-xl flex items-start gap-3 animate-in fade-in slide-in-from-bottom-5 duration-200"
         >
           <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 mt-0.5">
@@ -615,8 +716,12 @@ export default function App() {
         </div>
       )}
 
-      {/* Main Container Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 relative z-10">
+      {/* Main Container Content with WCAG AA Landmark and Skip Target */}
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 relative z-10 focus:outline-none"
+      >
         {/* VIEW 1: LANDING OVERVIEW (Default Home Screen per user request) */}
         {currentView === 'landing' && (
           <LandingHero
@@ -683,6 +788,11 @@ export default function App() {
             onViewGraph={handleViewGraph}
             onIgniteEnergy={handleIgniteEnergy}
             onJoinChallenge={handleJoinChallenge}
+            onInspectDiff={handleInspectDiff}
+            onExportPaper={(spark) => {
+              setPaperExportSpark(spark);
+              setIsPaperExportOpen(true);
+            }}
           />
         )}
 
@@ -766,8 +876,9 @@ export default function App() {
         onSelectWorld={(worldId) => {
           handleSelectWorld(worldId);
         }}
-        onSelectChallenge={(challengeId, worldId) => {
-          setSelectedWorldId(worldId);
+        onSelectChallenge={(challengeId) => {
+          const target = challenges.find((c) => c.id === challengeId);
+          if (target) setSelectedWorldId(target.worldId);
           setCurrentView('challenges');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
@@ -844,6 +955,70 @@ export default function App() {
           setIsMergeOpen(true);
         }}
         onSelectWorld={handleSelectWorld}
+      />
+
+      {/* Mutation Diff Inspector Modal */}
+      <MutationDiffModal
+        isOpen={isMutationDiffOpen}
+        onClose={() => setIsMutationDiffOpen(false)}
+        currentSpark={diffCurrentSpark}
+        parentSpark={
+          diffCurrentSpark
+            ? sparks.find(
+                (s) =>
+                  s.id === diffCurrentSpark.parentSparkId ||
+                  (diffCurrentSpark.mergedFromIds && diffCurrentSpark.mergedFromIds.includes(s.id))
+              ) || null
+            : null
+        }
+        onSelectSpark={(s) => {
+          setSelectedSparkForGraph(s);
+          setCurrentView('evolution');
+          setIsMutationDiffOpen(false);
+        }}
+      />
+
+      {/* Keyboard Shortcuts & Accessibility Modal */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      {/* System Architecture & Reliability Benchmark Modal */}
+      <ReliabilityModal
+        isOpen={isReliabilityOpen}
+        onClose={() => setIsReliabilityOpen(false)}
+        worldsCount={worlds.length}
+        sparksCount={sparks.length}
+        challengesCount={challenges.length}
+      />
+
+      {/* Quadratic Conviction Staking Modal (Innovation & Governance) */}
+      <QuadraticConsensusModal
+        isOpen={isConsensusOpen}
+        onClose={() => setIsConsensusOpen(false)}
+        sparks={sparks}
+        worlds={worlds}
+        onStakeEnergy={(sparkId, credits) => {
+          const additionalPoints = Math.round(Math.sqrt(credits) * 2);
+          setSparks((prev) =>
+            prev.map((s) => (s.id === sparkId ? { ...s, energy: Math.min(100, s.energy + additionalPoints) } : s))
+          );
+          showToast(
+            'Conviction Staked',
+            `Allocated ${credits} credits quadratic weight (+${additionalPoints}% energy).`,
+            'ignite'
+          );
+        }}
+      />
+
+      {/* Academic Paper & Provenance Tree Exporter Modal (Innovation) */}
+      <ResearchPaperExportModal
+        isOpen={isPaperExportOpen}
+        onClose={() => setIsPaperExportOpen(false)}
+        spark={paperExportSpark}
+        world={paperExportSpark ? worlds.find((w) => w.id === paperExportSpark.worldId) || null : null}
+        allSparks={sparks}
       />
 
       {/* Footer */}

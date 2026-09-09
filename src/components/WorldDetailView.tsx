@@ -38,6 +38,8 @@ interface WorldDetailViewProps {
   onViewGraph: (spark: Spark) => void;
   onIgniteEnergy: (sparkId: string) => void;
   onJoinChallenge: (challengeId: string) => void;
+  onInspectDiff?: (spark: Spark) => void;
+  onExportPaper?: (spark: Spark) => void;
 }
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -66,6 +68,8 @@ export const WorldDetailView: React.FC<WorldDetailViewProps> = ({
   onViewGraph,
   onIgniteEnergy,
   onJoinChallenge,
+  onInspectDiff,
+  onExportPaper,
 }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'sparks' | 'remixes' | 'projects'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -364,6 +368,8 @@ export const WorldDetailView: React.FC<WorldDetailViewProps> = ({
                 onMerge={onMergeSpark}
                 onViewGraph={onViewGraph}
                 onIgniteEnergy={onIgniteEnergy}
+                onInspectDiff={onInspectDiff}
+                onExportPaper={onExportPaper}
               />
             ))}
           </div>

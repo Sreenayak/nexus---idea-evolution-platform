@@ -38,6 +38,15 @@ export interface SparkAuthor {
   compatibilityScore?: number;
 }
 
+export type ReactionType = 'paradigmShift' | 'contrarian' | 'empiricalRigor' | 'moonshot';
+
+export interface SparkReactions {
+  paradigmShift: number;  // 💡 Shifts fundamental paradigm
+  contrarian: number;     // ⚡ Healthy contrarian critique
+  empiricalRigor: number; // 📐 Scientifically/technically sound
+  moonshot: number;       // 🚀 Audacious 10x breakthrough
+}
+
 export interface Spark {
   id: string;
   worldId: string;
@@ -60,6 +69,7 @@ export interface Spark {
   mergedIntoId?: string;
   targetProjectTitle?: string;
   childSparkIds?: string[];
+  reactions?: SparkReactions;
 }
 
 export interface Challenge {
@@ -134,3 +144,7 @@ export interface MergedProject {
   stage: 'Ideation' | 'Prototype' | 'Sprint' | 'Built';
   challengeAligned?: string;
 }
+
+// Aliases for architecture flexibility
+export type ConnectionEdge = ActivityConnection;
+export type WorldFilter = 'all' | 'sparks' | 'remixes' | 'projects';
