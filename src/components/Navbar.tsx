@@ -113,9 +113,9 @@ export const Navbar: React.FC<NavbarProps> = ({
       <header
         id="nexus-primary-nav"
         role="banner"
-        className="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/95 backdrop-blur-xl shadow-xs transition-all duration-300"
+        className="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/95 backdrop-blur-xl shadow-[0_1px_0_rgba(15,23,42,0.04)] transition-all duration-300"
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[1460px] mx-auto px-3 sm:px-5 lg:px-6">
           <div className="flex items-center justify-between h-16 gap-1.5 sm:gap-3">
             {/* Logo & Brand Identity */}
             <div className="flex items-center gap-2 shrink-0">
@@ -615,15 +615,27 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </button>
                 </div>
               ) : (
-                <button
-                  id="nav-signin-btn"
-                  onClick={onOpenAuth}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
-                  title="Sign In or Register"
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Sign In</span>
-                </button>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <button
+                    id="nav-signin-btn"
+                    onClick={onOpenAuth}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                    title="Sign In"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Sign In</span>
+                  </button>
+
+                  <button
+                    id="nav-register-btn"
+                    onClick={onOpenAuth}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 active:scale-95 cursor-pointer"
+                    title="Register"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Register</span>
+                  </button>
+                </div>
               )}
             </div>
           </div>

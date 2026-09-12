@@ -42,6 +42,11 @@ import {
   GitBranch,
   GitMerge,
   Flame,
+  Home,
+  Orbit,
+  Globe2,
+  Trophy,
+  Users2,
 } from 'lucide-react';
 
 export default function App() {
@@ -653,55 +658,244 @@ export default function App() {
   const currentActiveWorld =
     worlds.find((w) => w.id === selectedWorldId) || worlds[0];
 
+  const sidebarItems = [
+    { id: 'landing', label: 'Home', icon: Home },
+    { id: 'universe', label: 'Universe', icon: Orbit },
+    { id: 'worlds', label: 'Social Worlds', icon: Globe2 },
+    { id: 'evolution', label: 'Idea Evolution', icon: GitBranch },
+    { id: 'challenges', label: 'Challenges', icon: Trophy },
+    { id: 'connections', label: 'Connections', icon: Users2 },
+  ] as const;
+
+  const normalizedCurrentTab = currentView === 'world' ? 'worlds' : currentView;
+
   return (
-    <div className="relative min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="relative min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
       {/* Background Interactive Cosmic Stars Canvas in clean subtle light tones */}
       <ParticleBackground />
 
-      {/* Global Navbar */}
-      <Navbar
-        currentTab={currentView === 'world' ? 'worlds' : currentView}
-        onSelectTab={(tab) => {
-          setCurrentView(tab);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        onOpenCreateSpark={() => {
-          setCreateSparkDefaultWorldId(selectedWorldId);
-          setIsCreateSparkOpen(true);
-        }}
-        onOpenProfile={() => setIsProfileOpen(true)}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        onLogout={handleLogout}
-        isAuthenticated={isAuthenticated}
-        onOpenSearch={() => setIsSearchOpen(true)}
-        onToggleNova={() => setIsNovaAiOpen((prev) => !prev)}
-        isNovaOpen={isNovaAiOpen}
-        currentUser={currentUser}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        soundEnabled={soundEnabled}
-        onToggleSound={() => {
-          const next = soundEffects.toggle();
-          setSoundEnabled(next);
-          showToast(next ? 'Sound FX Enabled' : 'Sound FX Muted', 'Acoustic harmonic feedback updated', 'ignite');
-        }}
-        onOpenShortcuts={() => setIsShortcutsOpen(true)}
-        onOpenReliability={() => setIsReliabilityOpen(true)}
-        onOpenQuadraticConsensus={() => setIsConsensusOpen(true)}
-        onOpenPaperExport={() => {
-          if (sparks.length > 0) {
-            setPaperExportSpark(sparks[0]);
-          }
-          setIsPaperExportOpen(true);
-        }}
-        onOpenDiff={() => {
-          const remixedSpark = sparks.find((s) => s.parentSparkId) || sparks[0];
-          if (remixedSpark) {
-            setDiffCurrentSpark(remixedSpark);
-            setIsMutationDiffOpen(true);
-          }
-        }}
-      />
+      <div className="relative z-10 flex min-h-screen flex-col">
+        {/* Global Navbar */}
+        <Navbar
+          currentTab={normalizedCurrentTab}
+          onSelectTab={(tab) => {
+            setCurrentView(tab);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          onOpenCreateSpark={() => {
+            setCreateSparkDefaultWorldId(selectedWorldId);
+            setIsCreateSparkOpen(true);
+          }}
+          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenAuth={() => setIsAuthOpen(true)}
+          onLogout={handleLogout}
+          isAuthenticated={isAuthenticated}
+          onOpenSearch={() => setIsSearchOpen(true)}
+          onToggleNova={() => setIsNovaAiOpen((prev) => !prev)}
+          isNovaOpen={isNovaAiOpen}
+          currentUser={currentUser}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          soundEnabled={soundEnabled}
+          onToggleSound={() => {
+            const next = soundEffects.toggle();
+            setSoundEnabled(next);
+            showToast(next ? 'Sound FX Enabled' : 'Sound FX Muted', 'Acoustic harmonic feedback updated', 'ignite');
+          }}
+          onOpenShortcuts={() => setIsShortcutsOpen(true)}
+          onOpenReliability={() => setIsReliabilityOpen(true)}
+          onOpenQuadraticConsensus={() => setIsConsensusOpen(true)}
+          onOpenPaperExport={() => {
+            if (sparks.length > 0) {
+              setPaperExportSpark(sparks[0]);
+            }
+            setIsPaperExportOpen(true);
+          }}
+          onOpenDiff={() => {
+            const remixedSpark = sparks.find((s) => s.parentSparkId) || sparks[0];
+            if (remixedSpark) {
+              setDiffCurrentSpark(remixedSpark);
+              setIsMutationDiffOpen(true);
+            }
+          }}
+        />
+
+        <div className="flex flex-1 w-full max-w-[1460px] mx-auto px-3 sm:px-5 lg:px-6 pb-16">
+          <aside className="hidden lg:flex w-72 shrink-0 pt-5 pr-5">
+            <div className="w-full rounded-[28px] border border-slate-200 bg-white/80 backdrop-blur-xl p-3 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+              <div className="mb-4 px-2 pt-1">
+                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400 font-mono font-bold">
+                  Workspace
+                </p>
+                <h2 className="mt-2 text-lg font-display font-bold text-slate-900">Navigation</h2>
+              </div>
+
+              <nav className="space-y-2">
+                {sidebarItems.map(({ id, label, icon: Icon }) => {
+                  const active = normalizedCurrentTab === id;
+
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => {
+                        setCurrentView(id === 'worlds' ? 'worlds' : id);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all duration-200 cursor-pointer ${
+                        active
+                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
+                      }`}
+                    >
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-xl border ${
+                          active
+                            ? 'bg-white border-indigo-200 text-indigo-600'
+                            : 'bg-slate-100 border-slate-200 text-slate-500'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm font-semibold">{label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </aside>
+
+          {/* Main Container Content with WCAG AA Landmark and Skip Target */}
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="flex-1 pt-5 relative z-10 focus:outline-none"
+          >
+            {/* VIEW 1: LANDING OVERVIEW (Default Home Screen per user request) */}
+            {currentView === 'landing' && (
+              <LandingHero
+                onEnterUniverse={() => setCurrentView('universe')}
+                onExploreEvolution={() => setCurrentView('evolution')}
+                onOpenCreateSpark={() => {
+                  setCreateSparkDefaultWorldId('world-ai');
+                  setIsCreateSparkOpen(true);
+                }}
+              />
+            )}
+
+            {/* VIEW 2: UNIVERSE GALAXY MAP */}
+            {currentView === 'universe' && (
+              <div className="space-y-6">
+                <UniverseMap
+                  worlds={worlds}
+                  selectedWorldId={selectedWorldId}
+                  onSelectWorld={handleSelectWorld}
+                  onNavigateToWorlds={() => setCurrentView('worlds')}
+                  onOpenCreateSpark={() => {
+                    setCreateSparkDefaultWorldId(selectedWorldId);
+                    setIsCreateSparkOpen(true);
+                  }}
+                />
+              </div>
+            )}
+
+            {/* VIEW 2b: SOCIAL WORLDS DIRECTORY */}
+            {currentView === 'worlds' && (
+              <WorldsDirectory
+                worlds={worlds}
+                onSelectWorld={handleSelectWorld}
+                onOpenCreateSpark={(wId) => {
+                  setCreateSparkDefaultWorldId(wId);
+                  setIsCreateSparkOpen(true);
+                }}
+                onViewChallenges={(wId) => {
+                  setSelectedWorldId(wId);
+                  setCurrentView('challenges');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                searchQuery={searchQuery}
+              />
+            )}
+
+            {/* VIEW 3: SOCIAL WORLD DETAIL */}
+            {currentView === 'world' && (
+              <WorldDetailView
+                world={currentActiveWorld}
+                allWorlds={worlds}
+                sparks={sparks}
+                challenges={challenges}
+                currentUser={currentUser}
+                onBackToUniverse={() => setCurrentView('universe')}
+                onBackToWorlds={() => setCurrentView('worlds')}
+                onSelectOtherWorld={handleSelectWorld}
+                onOpenCreateSparkInWorld={(wId) => {
+                  setCreateSparkDefaultWorldId(wId);
+                  setIsCreateSparkOpen(true);
+                }}
+                onRemixSpark={handleStartRemix}
+                onMergeSpark={handleStartMerge}
+                onViewGraph={handleViewGraph}
+                onIgniteEnergy={handleIgniteEnergy}
+                onJoinChallenge={handleJoinChallenge}
+                onInspectDiff={handleInspectDiff}
+                onExportPaper={(spark) => {
+                  setPaperExportSpark(spark);
+                  setIsPaperExportOpen(true);
+                }}
+              />
+            )}
+
+            {/* VIEW 4: IDEA EVOLUTION GRAPH (DAG) */}
+            {currentView === 'evolution' && (
+              <div className="space-y-6">
+                <IdeaEvolutionGraph
+                  sparks={sparks}
+                  allSparks={sparks}
+                  worlds={worlds}
+                  selectedSparkId={selectedSparkForGraph.id}
+                  onSelectSpark={(spark) => setSelectedSparkForGraph(spark)}
+                  onRemixSpark={handleStartRemix}
+                  onRemixFromNode={handleStartRemix}
+                  onMergeSpark={handleStartMerge}
+                  onMergeBranches={(sA, sB) => {
+                    setMergeSparkA(sA);
+                    setMergeSparkB(sB);
+                    setIsMergeOpen(true);
+                  }}
+                  onIgniteEnergy={handleIgniteEnergy}
+                />
+              </div>
+            )}
+
+            {/* VIEW 5: CHALLENGES LIST */}
+            {currentView === 'challenges' && (
+              <ChallengesList
+                challenges={challenges}
+                worlds={worlds}
+                currentUser={currentUser}
+                onJoinChallenge={handleJoinChallenge}
+                onSelectWorld={handleSelectWorld}
+              />
+            )}
+
+            {/* VIEW 6: ACTIVITY CONNECTIONS */}
+            {currentView === 'connections' && (
+              <ConnectionsView
+                connections={connections}
+                currentUser={currentUser}
+                onInitiateCollab={(user) => {
+                  setCreateSparkDefaultWorldId('world-ai');
+                  setIsCreateSparkOpen(true);
+                  showToast(
+                    'Collaborative Spark Initiated',
+                    `Ready to co-author an idea with ${user.name} based on your complementary skills.`,
+                    'spark'
+                  );
+                }}
+              />
+            )}
+          </main>
+        </div>
+      </div>
 
       {/* Toast Notification Banner with ARIA Live Announcement */}
       {toast && (
@@ -728,137 +922,6 @@ export default function App() {
           </div>
         </div>
       )}
-
-      {/* Main Container Content with WCAG AA Landmark and Skip Target */}
-      <main
-        id="main-content"
-        tabIndex={-1}
-        className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 relative z-10 focus:outline-none"
-      >
-        {/* VIEW 1: LANDING OVERVIEW (Default Home Screen per user request) */}
-        {currentView === 'landing' && (
-          <LandingHero
-            onEnterUniverse={() => setCurrentView('universe')}
-            onExploreEvolution={() => setCurrentView('evolution')}
-            onOpenCreateSpark={() => {
-              setCreateSparkDefaultWorldId('world-ai');
-              setIsCreateSparkOpen(true);
-            }}
-          />
-        )}
-
-        {/* VIEW 2: UNIVERSE GALAXY MAP */}
-        {currentView === 'universe' && (
-          <div className="space-y-6">
-            <UniverseMap
-              worlds={worlds}
-              selectedWorldId={selectedWorldId}
-              onSelectWorld={handleSelectWorld}
-              onNavigateToWorlds={() => setCurrentView('worlds')}
-              onOpenCreateSpark={() => {
-                setCreateSparkDefaultWorldId(selectedWorldId);
-                setIsCreateSparkOpen(true);
-              }}
-            />
-          </div>
-        )}
-
-        {/* VIEW 2b: SOCIAL WORLDS DIRECTORY */}
-        {currentView === 'worlds' && (
-          <WorldsDirectory
-            worlds={worlds}
-            onSelectWorld={handleSelectWorld}
-            onOpenCreateSpark={(wId) => {
-              setCreateSparkDefaultWorldId(wId);
-              setIsCreateSparkOpen(true);
-            }}
-            onViewChallenges={(wId) => {
-              setSelectedWorldId(wId);
-              setCurrentView('challenges');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            searchQuery={searchQuery}
-          />
-        )}
-
-        {/* VIEW 3: SOCIAL WORLD DETAIL */}
-        {currentView === 'world' && (
-          <WorldDetailView
-            world={currentActiveWorld}
-            allWorlds={worlds}
-            sparks={sparks}
-            challenges={challenges}
-            currentUser={currentUser}
-            onBackToUniverse={() => setCurrentView('universe')}
-            onBackToWorlds={() => setCurrentView('worlds')}
-            onSelectOtherWorld={handleSelectWorld}
-            onOpenCreateSparkInWorld={(wId) => {
-              setCreateSparkDefaultWorldId(wId);
-              setIsCreateSparkOpen(true);
-            }}
-            onRemixSpark={handleStartRemix}
-            onMergeSpark={handleStartMerge}
-            onViewGraph={handleViewGraph}
-            onIgniteEnergy={handleIgniteEnergy}
-            onJoinChallenge={handleJoinChallenge}
-            onInspectDiff={handleInspectDiff}
-            onExportPaper={(spark) => {
-              setPaperExportSpark(spark);
-              setIsPaperExportOpen(true);
-            }}
-          />
-        )}
-
-        {/* VIEW 4: IDEA EVOLUTION GRAPH (DAG) */}
-        {currentView === 'evolution' && (
-          <div className="space-y-6">
-            <IdeaEvolutionGraph
-              sparks={sparks}
-              allSparks={sparks}
-              worlds={worlds}
-              selectedSparkId={selectedSparkForGraph.id}
-              onSelectSpark={(spark) => setSelectedSparkForGraph(spark)}
-              onRemixSpark={handleStartRemix}
-              onRemixFromNode={handleStartRemix}
-              onMergeSpark={handleStartMerge}
-              onMergeBranches={(sA, sB) => {
-                setMergeSparkA(sA);
-                setMergeSparkB(sB);
-                setIsMergeOpen(true);
-              }}
-              onIgniteEnergy={handleIgniteEnergy}
-            />
-          </div>
-        )}
-
-        {/* VIEW 5: CHALLENGES LIST */}
-        {currentView === 'challenges' && (
-          <ChallengesList
-            challenges={challenges}
-            worlds={worlds}
-            currentUser={currentUser}
-            onJoinChallenge={handleJoinChallenge}
-            onSelectWorld={handleSelectWorld}
-          />
-        )}
-
-        {/* VIEW 6: ACTIVITY CONNECTIONS */}
-        {currentView === 'connections' && (
-          <ConnectionsView
-            connections={connections}
-            currentUser={currentUser}
-            onInitiateCollab={(user) => {
-              setCreateSparkDefaultWorldId('world-ai');
-              setIsCreateSparkOpen(true);
-              showToast(
-                'Collaborative Spark Initiated',
-                `Ready to co-author an idea with ${user.name} based on your complementary skills.`,
-                'spark'
-              );
-            }}
-          />
-        )}
-      </main>
 
       {/* Global Modals */}
       {/* Authentication Modal */}
