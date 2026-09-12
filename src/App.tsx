@@ -667,6 +667,8 @@ export default function App() {
     { id: 'connections', label: 'Connections', icon: Users2 },
   ] as const;
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const normalizedCurrentTab = currentView === 'world' ? 'worlds' : currentView;
 
   return (
@@ -721,48 +723,68 @@ export default function App() {
         />
 
         <div className="flex flex-1 w-full max-w-[1460px] mx-auto px-3 sm:px-5 lg:px-6 pb-16">
-          <aside className="hidden lg:flex w-72 shrink-0 pt-5 pr-5">
-            <div className="w-full rounded-[28px] border border-slate-200 bg-white/80 backdrop-blur-xl p-3 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-              <div className="mb-4 px-2 pt-1">
-                <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400 font-mono font-bold">
-                  Workspace
-                </p>
-                <h2 className="mt-2 text-lg font-display font-bold text-slate-900">Navigation</h2>
+          <div className="relative flex items-start">
+            <button
+              type="button"
+              aria-label="Toggle navigation menu"
+              onClick={() => setIsSidebarOpen((prev) => !prev)}
+              className="hidden lg:flex mt-5 mr-3 h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white/90 text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer"
+            >
+              <div className="flex flex-col gap-1.5">
+                <span className="block h-0.5 w-5 rounded-full bg-slate-700" />
+                <span className="block h-0.5 w-5 rounded-full bg-slate-700" />
+                <span className="block h-0.5 w-5 rounded-full bg-slate-700" />
               </div>
+            </button>
 
-              <nav className="space-y-2">
-                {sidebarItems.map(({ id, label, icon: Icon }) => {
-                  const active = normalizedCurrentTab === id;
+            <aside
+              className={`hidden lg:block transition-all duration-300 ease-in-out ${
+                isSidebarOpen ? 'w-72 opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-4 overflow-hidden'
+              }`}
+            >
+              <div className="w-72 rounded-[28px] border border-slate-200 bg-white/80 backdrop-blur-xl p-3 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+                <div className="mb-4 px-2 pt-1">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400 font-mono font-bold">
+                    Workspace
+                  </p>
+                  <h2 className="mt-2 text-lg font-display font-bold text-slate-900">Navigation</h2>
+                </div>
 
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => {
-                        setCurrentView(id === 'worlds' ? 'worlds' : id);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                      className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all duration-200 cursor-pointer ${
-                        active
-                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
-                      }`}
-                    >
-                      <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-xl border ${
+                <nav className="space-y-2">
+                  {sidebarItems.map(({ id, label, icon: Icon }) => {
+                    const active = normalizedCurrentTab === id;
+
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => {
+                          setCurrentView(id === 'worlds' ? 'worlds' : id);
+                          setIsSidebarOpen(false);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all duration-200 cursor-pointer ${
                           active
-                            ? 'bg-white border-indigo-200 text-indigo-600'
-                            : 'bg-slate-100 border-slate-200 text-slate-500'
+                            ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm'
+                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
                         }`}
                       >
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <span className="text-sm font-semibold">{label}</span>
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-          </aside>
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-xl border ${
+                            active
+                              ? 'bg-white border-indigo-200 text-indigo-600'
+                              : 'bg-slate-100 border-slate-200 text-slate-500'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm font-semibold">{label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+            </aside>
+          </div>
 
           {/* Main Container Content with WCAG AA Landmark and Skip Target */}
           <main
