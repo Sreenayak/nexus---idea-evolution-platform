@@ -73,32 +73,46 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenDiff,
 }) => {
   const [isFeaturesMenuOpen, setIsFeaturesMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const featuresMenuRef = useRef<HTMLDivElement>(null);
+  const sidebarMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close features menu when clicking outside or pressing Escape
+  const sidebarItems = [
+    { id: 'landing', label: 'Home', icon: Home },
+    { id: 'universe', label: 'Universe', icon: Orbit },
+    { id: 'worlds', label: 'Social Worlds', icon: Globe2 },
+    { id: 'evolution', label: 'Idea Evolution', icon: GitBranch },
+    { id: 'challenges', label: 'Challenges', icon: Trophy },
+    { id: 'connections', label: 'Connections', icon: Users2 },
+  ] as const;
+
+  // Close menus when clicking outside or pressing Escape
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (featuresMenuRef.current && !featuresMenuRef.current.contains(e.target as Node)) {
         setIsFeaturesMenuOpen(false);
+      }
+
+      if (sidebarMenuRef.current && !sidebarMenuRef.current.contains(e.target as Node)) {
+        setIsSidebarOpen(false);
       }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsFeaturesMenuOpen(false);
+        setIsSidebarOpen(false);
       }
     };
 
-    if (isFeaturesMenuOpen) {
-      document.addEventListener('mousedown', handleOutsideClick);
-      document.addEventListener('keydown', handleKeyDown);
-    }
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isFeaturesMenuOpen]);
+  }, []);
 
   return (
     <>
@@ -116,9 +130,68 @@ export const Navbar: React.FC<NavbarProps> = ({
         className="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/95 backdrop-blur-xl shadow-[0_1px_0_rgba(15,23,42,0.04)] transition-all duration-300"
       >
         <div className="w-full max-w-[1460px] mx-auto px-3 sm:px-5 lg:px-6">
-          <div className="flex items-center justify-between h-16 gap-1.5 sm:gap-3">
-            {/* Logo & Brand Identity */}
-            <div className="flex items-center gap-2 shrink-0">
+          <div className="relative flex items-center justify-between h-16 gap-1.5 sm:gap-3">
+            <div className="relative flex items-center z-20" ref={sidebarMenuRef}>
+              <button
+                type="button"
+                aria-label="Toggle navigation menu"
+                onClick={() => setIsSidebarOpen((prev) => !prev)}
+                className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/90 text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer"
+              >
+                <div className="flex flex-col gap-1.5">
+                  <span className="block h-0.5 w-5 rounded-full bg-slate-700" />
+                  <span className="block h-0.5 w-5 rounded-full bg-slate-700" />
+                  <span className="block h-0.5 w-5 rounded-full bg-slate-700" />
+                </div>
+              </button>
+
+              <div
+                className={`absolute left-0 top-full mt-2 w-72 rounded-[24px] border border-slate-200 bg-white/95 p-3 shadow-[0_18px_45px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-all duration-300 origin-top-left ${
+                  isSidebarOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 -translate-y-2 pointer-events-none'
+                }`}
+              >
+                <div className="mb-4 px-2 pt-1">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400 font-mono font-bold">
+                    Workspace
+                  </p>
+                  <h2 className="mt-2 text-lg font-display font-bold text-slate-900">Navigation</h2>
+                </div>
+
+                <nav className="space-y-2">
+                  {sidebarItems.map(({ id, label, icon: Icon }) => {
+                    const active = currentTab === id;
+
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => {
+                          onSelectTab(id as 'landing' | 'universe' | 'worlds' | 'evolution' | 'challenges' | 'connections');
+                          setIsSidebarOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all duration-200 cursor-pointer ${
+                          active
+                            ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm'
+                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
+                        }`}
+                      >
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-xl border ${
+                            active
+                              ? 'bg-white border-indigo-200 text-indigo-600'
+                              : 'bg-slate-100 border-slate-200 text-slate-500'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm font-semibold">{label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 ml-14 lg:ml-16">
               <button
                 id="nexus-logo-btn"
                 onClick={() => onSelectTab('landing')}
@@ -144,89 +217,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
               </button>
             </div>
-
-            {/* Main Navigation Links */}
-            <nav className="hidden md:flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80 shrink-0">
-              <button
-                id="nav-home-btn"
-                onClick={() => onSelectTab('landing')}
-                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                  currentTab === 'landing'
-                    ? 'bg-white text-indigo-700 shadow-xs border border-indigo-100'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <Home className="w-3.5 h-3.5" />
-                <span>Home</span>
-              </button>
-
-              <button
-                id="nav-universe-btn"
-                onClick={() => onSelectTab('universe')}
-                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                  currentTab === 'universe'
-                    ? 'bg-white text-indigo-700 shadow-xs border border-indigo-100'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <Orbit className="w-3.5 h-3.5" />
-                <span>Universe</span>
-              </button>
-
-              <button
-                id="nav-worlds-btn"
-                onClick={() => onSelectTab('worlds')}
-                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                  currentTab === 'worlds'
-                    ? 'bg-white text-indigo-700 shadow-xs border border-indigo-100'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <Globe2 className="w-3.5 h-3.5" />
-                <span className="hidden xl:inline">Social</span>
-                <span>Worlds</span>
-              </button>
-
-              <button
-                id="nav-evolution-btn"
-                onClick={() => onSelectTab('evolution')}
-                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                  currentTab === 'evolution'
-                    ? 'bg-white text-indigo-700 shadow-xs border border-indigo-100'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <GitBranch className="w-3.5 h-3.5" />
-                <span className="hidden xl:inline">Idea</span>
-                <span>Evolution</span>
-              </button>
-
-              <button
-                id="nav-challenges-btn"
-                onClick={() => onSelectTab('challenges')}
-                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                  currentTab === 'challenges'
-                    ? 'bg-white text-amber-800 shadow-xs border border-amber-200'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <Trophy className="w-3.5 h-3.5 text-amber-600" />
-                <span>Challenges</span>
-              </button>
-
-              <button
-                id="nav-connections-btn"
-                onClick={() => onSelectTab('connections')}
-                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                  currentTab === 'connections'
-                    ? 'bg-white text-pink-700 shadow-xs border border-pink-200'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <Users2 className="w-3.5 h-3.5 text-pink-600" />
-                <span>Connections</span>
-              </button>
-            </nav>
 
             {/* Features Directory Dropdown Trigger (Visible to ALL users for complete feature discovery) */}
             <div className="relative" ref={featuresMenuRef}>
@@ -489,7 +479,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Quick Actions Header Cluster */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300">
               {/* Omni Search Button */}
               <button
                 id="nexus-search-trigger-btn"
@@ -619,7 +609,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     id="nav-signin-btn"
                     onClick={onOpenAuth}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
                     title="Sign In"
                   >
                     <LogIn className="w-3.5 h-3.5" />
@@ -629,7 +619,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     id="nav-register-btn"
                     onClick={onOpenAuth}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 active:scale-95 cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 active:scale-95 cursor-pointer whitespace-nowrap"
                     title="Register"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
