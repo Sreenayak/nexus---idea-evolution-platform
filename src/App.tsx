@@ -716,131 +716,133 @@ export default function App() {
           <main
             id="main-content"
             tabIndex={-1}
-            className="flex-1 pt-5 relative z-10 focus:outline-none"
+            className="flex-1 pt-5 relative z-10 focus:outline-none overflow-x-auto"
           >
-            {/* VIEW 1: LANDING OVERVIEW (Default Home Screen per user request) */}
-            {currentView === 'landing' && (
-              <LandingHero
-                onEnterUniverse={() => setCurrentView('universe')}
-                onExploreEvolution={() => setCurrentView('evolution')}
-                onOpenCreateSpark={() => {
-                  setCreateSparkDefaultWorldId('world-ai');
-                  setIsCreateSparkOpen(true);
-                }}
-              />
-            )}
-
-            {/* VIEW 2: UNIVERSE GALAXY MAP */}
-            {currentView === 'universe' && (
-              <div className="space-y-6">
-                <UniverseMap
-                  worlds={worlds}
-                  selectedWorldId={selectedWorldId}
-                  onSelectWorld={handleSelectWorld}
-                  onNavigateToWorlds={() => setCurrentView('worlds')}
+            <div className="min-w-[780px] w-full">
+              {/* VIEW 1: LANDING OVERVIEW (Default Home Screen per user request) */}
+              {currentView === 'landing' && (
+                <LandingHero
+                  onEnterUniverse={() => setCurrentView('universe')}
+                  onExploreEvolution={() => setCurrentView('evolution')}
                   onOpenCreateSpark={() => {
-                    setCreateSparkDefaultWorldId(selectedWorldId);
+                    setCreateSparkDefaultWorldId('world-ai');
                     setIsCreateSparkOpen(true);
                   }}
                 />
-              </div>
-            )}
+              )}
 
-            {/* VIEW 2b: SOCIAL WORLDS DIRECTORY */}
-            {currentView === 'worlds' && (
-              <WorldsDirectory
-                worlds={worlds}
-                onSelectWorld={handleSelectWorld}
-                onOpenCreateSpark={(wId) => {
-                  setCreateSparkDefaultWorldId(wId);
-                  setIsCreateSparkOpen(true);
-                }}
-                onViewChallenges={(wId) => {
-                  setSelectedWorldId(wId);
-                  setCurrentView('challenges');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                searchQuery={searchQuery}
-              />
-            )}
+              {/* VIEW 2: UNIVERSE GALAXY MAP */}
+              {currentView === 'universe' && (
+                <div className="space-y-6">
+                  <UniverseMap
+                    worlds={worlds}
+                    selectedWorldId={selectedWorldId}
+                    onSelectWorld={handleSelectWorld}
+                    onNavigateToWorlds={() => setCurrentView('worlds')}
+                    onOpenCreateSpark={() => {
+                      setCreateSparkDefaultWorldId(selectedWorldId);
+                      setIsCreateSparkOpen(true);
+                    }}
+                  />
+                </div>
+              )}
 
-            {/* VIEW 3: SOCIAL WORLD DETAIL */}
-            {currentView === 'world' && (
-              <WorldDetailView
-                world={currentActiveWorld}
-                allWorlds={worlds}
-                sparks={sparks}
-                challenges={challenges}
-                currentUser={currentUser}
-                onBackToUniverse={() => setCurrentView('universe')}
-                onBackToWorlds={() => setCurrentView('worlds')}
-                onSelectOtherWorld={handleSelectWorld}
-                onOpenCreateSparkInWorld={(wId) => {
-                  setCreateSparkDefaultWorldId(wId);
-                  setIsCreateSparkOpen(true);
-                }}
-                onRemixSpark={handleStartRemix}
-                onMergeSpark={handleStartMerge}
-                onViewGraph={handleViewGraph}
-                onIgniteEnergy={handleIgniteEnergy}
-                onJoinChallenge={handleJoinChallenge}
-                onInspectDiff={handleInspectDiff}
-                onExportPaper={(spark) => {
-                  setPaperExportSpark(spark);
-                  setIsPaperExportOpen(true);
-                }}
-              />
-            )}
-
-            {/* VIEW 4: IDEA EVOLUTION GRAPH (DAG) */}
-            {currentView === 'evolution' && (
-              <div className="space-y-6">
-                <IdeaEvolutionGraph
-                  sparks={sparks}
-                  allSparks={sparks}
+              {/* VIEW 2b: SOCIAL WORLDS DIRECTORY */}
+              {currentView === 'worlds' && (
+                <WorldsDirectory
                   worlds={worlds}
-                  selectedSparkId={selectedSparkForGraph.id}
-                  onSelectSpark={(spark) => setSelectedSparkForGraph(spark)}
-                  onRemixSpark={handleStartRemix}
-                  onRemixFromNode={handleStartRemix}
-                  onMergeSpark={handleStartMerge}
-                  onMergeBranches={(sA, sB) => {
-                    setMergeSparkA(sA);
-                    setMergeSparkB(sB);
-                    setIsMergeOpen(true);
+                  onSelectWorld={handleSelectWorld}
+                  onOpenCreateSpark={(wId) => {
+                    setCreateSparkDefaultWorldId(wId);
+                    setIsCreateSparkOpen(true);
                   }}
-                  onIgniteEnergy={handleIgniteEnergy}
+                  onViewChallenges={(wId) => {
+                    setSelectedWorldId(wId);
+                    setCurrentView('challenges');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  searchQuery={searchQuery}
                 />
-              </div>
-            )}
+              )}
 
-            {/* VIEW 5: CHALLENGES LIST */}
-            {currentView === 'challenges' && (
-              <ChallengesList
-                challenges={challenges}
-                worlds={worlds}
-                currentUser={currentUser}
-                onJoinChallenge={handleJoinChallenge}
-                onSelectWorld={handleSelectWorld}
-              />
-            )}
+              {/* VIEW 3: SOCIAL WORLD DETAIL */}
+              {currentView === 'world' && (
+                <WorldDetailView
+                  world={currentActiveWorld}
+                  allWorlds={worlds}
+                  sparks={sparks}
+                  challenges={challenges}
+                  currentUser={currentUser}
+                  onBackToUniverse={() => setCurrentView('universe')}
+                  onBackToWorlds={() => setCurrentView('worlds')}
+                  onSelectOtherWorld={handleSelectWorld}
+                  onOpenCreateSparkInWorld={(wId) => {
+                    setCreateSparkDefaultWorldId(wId);
+                    setIsCreateSparkOpen(true);
+                  }}
+                  onRemixSpark={handleStartRemix}
+                  onMergeSpark={handleStartMerge}
+                  onViewGraph={handleViewGraph}
+                  onIgniteEnergy={handleIgniteEnergy}
+                  onJoinChallenge={handleJoinChallenge}
+                  onInspectDiff={handleInspectDiff}
+                  onExportPaper={(spark) => {
+                    setPaperExportSpark(spark);
+                    setIsPaperExportOpen(true);
+                  }}
+                />
+              )}
 
-            {/* VIEW 6: ACTIVITY CONNECTIONS */}
-            {currentView === 'connections' && (
-              <ConnectionsView
-                connections={connections}
-                currentUser={currentUser}
-                onInitiateCollab={(user) => {
-                  setCreateSparkDefaultWorldId('world-ai');
-                  setIsCreateSparkOpen(true);
-                  showToast(
-                    'Collaborative Spark Initiated',
-                    `Ready to co-author an idea with ${user.name} based on your complementary skills.`,
-                    'spark'
-                  );
-                }}
-              />
-            )}
+              {/* VIEW 4: IDEA EVOLUTION GRAPH (DAG) */}
+              {currentView === 'evolution' && (
+                <div className="space-y-6">
+                  <IdeaEvolutionGraph
+                    sparks={sparks}
+                    allSparks={sparks}
+                    worlds={worlds}
+                    selectedSparkId={selectedSparkForGraph.id}
+                    onSelectSpark={(spark) => setSelectedSparkForGraph(spark)}
+                    onRemixSpark={handleStartRemix}
+                    onRemixFromNode={handleStartRemix}
+                    onMergeSpark={handleStartMerge}
+                    onMergeBranches={(sA, sB) => {
+                      setMergeSparkA(sA);
+                      setMergeSparkB(sB);
+                      setIsMergeOpen(true);
+                    }}
+                    onIgniteEnergy={handleIgniteEnergy}
+                  />
+                </div>
+              )}
+
+              {/* VIEW 5: CHALLENGES LIST */}
+              {currentView === 'challenges' && (
+                <ChallengesList
+                  challenges={challenges}
+                  worlds={worlds}
+                  currentUser={currentUser}
+                  onJoinChallenge={handleJoinChallenge}
+                  onSelectWorld={handleSelectWorld}
+                />
+              )}
+
+              {/* VIEW 6: ACTIVITY CONNECTIONS */}
+              {currentView === 'connections' && (
+                <ConnectionsView
+                  connections={connections}
+                  currentUser={currentUser}
+                  onInitiateCollab={(user) => {
+                    setCreateSparkDefaultWorldId('world-ai');
+                    setIsCreateSparkOpen(true);
+                    showToast(
+                      'Collaborative Spark Initiated',
+                      `Ready to co-author an idea with ${user.name} based on your complementary skills.`,
+                      'spark'
+                    );
+                  }}
+                />
+              )}
+            </div>
           </main>
         </div>
       </div>
